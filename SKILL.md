@@ -21,6 +21,22 @@ Skill for querying NFT collection statistics, portfolios, and monitoring active 
 
 Please configure the `ELEMENT_API_KEY` environment variable within your OpenClaw instance.
 
+## 🧠 Agent Knowledge Base: Token Mapping
+**🚨 SYSTEM RULE for Data Interpretation:** When the API response contains a `paymentToken` address, you MUST use the following mapping table to determine the correct currency symbol and decimals for formatting the price. If a token is not listed, default to the native chain currency. Pay strict attention to the `Decimals` column for price calculation.
+
+| Chain | Payment Token Address (paymentToken) | Currency Symbol | Decimals |
+| :--- | :--- | :--- | :--- |
+| **eth** | `0x0000000000000000000000000000000000000000` | ETH | 18 |
+| **eth** | `0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2` | WETH | 18 |
+| **bsc** | `0x0000000000000000000000000000000000000000` | BNB | 18 |
+| **bsc** | `0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c` | WBNB | 18 |
+| **bsc** | `0x55d398326f99059ff775485246999027b3197955` | USDT | 18 |
+| **polygon** | `0x0000000000000000000000000000000000000000` | MATIC | 18 |
+| **polygon** | `0x7ceb23fd6bc0add59e62ac25578270cff1b9f619` | ETH | 18 |
+| **base** | `0x0000000000000000000000000000000000000000` | ETH | 18 |
+| **base** | `0x4200000000000000000000000000000000000006` | WETH | 18 |
+| **base** | `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` | USDC | 6 |
+
 ## 📊 Queries & Monitors
 
 ### Get Collection Stats
