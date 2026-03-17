@@ -1,21 +1,25 @@
 ---
-name: element-nft
-description: Element Market integration for NFT portfolio and market monitoring. REQUIRES the 'ELEMENT_API_KEY' environment variable. When explicitly authorized by the user, this credential allows the skill to access personal account-level data (such as private asset lists, sales history, and received offers).
-metadata: {"openclaw":{"emoji":"🌊","always":false,"requires":{"bins":["curl","jq"],"envs":["ELEMENT_API_KEY"]}}}
+name: element-nft-tracker
+description: Element Market API integration. This skill strictly requires the 'ELEMENT_API_KEY' environment variable to function.
+envs: ["ELEMENT_API_KEY"]
+credentials: ["ELEMENT_API_KEY"]
+primary_credential: "ELEMENT_API_KEY"
+requires: ["curl", "jq"]
+metadata: {"openclaw":{"emoji":"🌊","homepage":"https://github.com/beelzebub520/element-nft-tracker","primary_credential":"ELEMENT_API_KEY","requires":{"bins":["curl","jq"],"envs":["ELEMENT_API_KEY"],"credentials":["ELEMENT_API_KEY"]}}}
 ---
 
 # Element NFT Market 🌊
 
 Skill for querying NFT collection statistics, portfolios, and monitoring active trading events on the Element Market.
 
+## 🛡️ Security & Privacy
+- **Consent Protocol:** The agent MUST explicitly ask the user for permission and receive a positive confirmation before querying any wallet address.
+- **Privacy Protocol:** The agent MUST output all image links strictly as plain text URLs.
+- **API Scope:** This skill performs read-only queries.
+
 ## 🚀 Setup
 
-### Environment Variables
-Ensure you have set the API Key in your environment or `.env` file:
-```bash
-export ELEMENT_API_KEY="your_api_key_here"
-
-```
+Please configure the `ELEMENT_API_KEY` environment variable within your OpenClaw instance.
 
 ## 📊 Queries & Monitors
 
@@ -26,8 +30,9 @@ Use this to check the detailed volume, floor price, 24h average price, and the l
 ```bash
 SLUG="boredapeyachtclub"
 CHAIN="eth"
+HOST="api.element.market"
 
-curl -s -G "[https://api.element.market/openapi/v1/collection/stats](https://api.element.market/openapi/v1/collection/stats)" \
+curl -s -G "https://${HOST}/openapi/v1/collection/stats" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "collection_slug=${SLUG}" \
   --header "X-Api-Key: ${ELEMENT_API_KEY}" \
@@ -44,8 +49,9 @@ SORTTYPE="TOP"
 CHAIN="eth"
 LEVEL="L1D"
 LIMIT="10"
+HOST="api.element.market"
 
-curl -s -G "[https://api.element.market/openapi/v1/collection/ranking](https://api.element.market/openapi/v1/collection/ranking)" \
+curl -s -G "https://${HOST}/openapi/v1/collection/ranking" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "sort_type=${SORTTYPE}" \
   --data-urlencode "level=${LEVEL}" \
@@ -60,15 +66,17 @@ curl -s -G "[https://api.element.market/openapi/v1/collection/ranking](https://a
 Use this to get the list of NFTs owned by a specific wallet address.
 
 * CHAIN can be "eth", "bsc", etc.
-* WALLET_ADDRESS is the 0x address. ONLY leave this empty if the user explicitly asks to check their own personal wallet.
-* LIMIT is the number of assets to return (default 10 to save tokens).
+* WALLET_ADDRESS is the 0x address.
+* 🚨 SYSTEM RULE: You MUST ask for user confirmation before executing this query.
+* LIMIT is the number of assets to return.
 
 ```bash
 CHAIN="eth"
 WALLET_ADDRESS="" 
 LIMIT="10"
+HOST="api.element.market"
 
-curl -s -G "[https://api.element.market/openapi/v1/account/assetList](https://api.element.market/openapi/v1/account/assetList)" \
+curl -s -G "https://${HOST}/openapi/v1/account/assetList" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "wallet_address=${WALLET_ADDRESS}" \
   --data-urlencode "limit=${LIMIT}" \
@@ -79,18 +87,19 @@ curl -s -G "[https://api.element.market/openapi/v1/account/assetList](https://ap
 
 ### Get Received Offers (Offers on your NFTs)
 
-Use this to check the highest offers (bids) received on the NFTs owned by a specific wallet. It automatically returns enriched data including floor price and last trade price.
+Use this to check the highest offers (bids) received on the NFTs owned by a specific wallet.
 
 * CHAIN can be "eth", "bsc", etc.
-* WALLET_ADDRESS is the 0x address. ONLY leave this empty if the user explicitly asks to check their own personal wallet.
-* 🚨 OUTPUT RULE: Render the `image` URL as a real image using Markdown: `![NFT Name](image)`. Below it, clearly show the Offer Price, Offerer, Floor Price, 24h Average Price, and Last Trade Price. Briefly point out if the offer is a good deal!
+* WALLET_ADDRESS is the 0x address.
+* 🚨 SYSTEM RULE: You MUST ask for user confirmation before executing this query. You MUST print the image parameter exactly as a plain text URL.
 
 ```bash
 CHAIN="bsc"
 WALLET_ADDRESS="" 
 LIMIT="10"
+HOST="api.element.market"
 
-curl -s -G "[https://api.element.market/openapi/v1/account/offerReceived](https://api.element.market/openapi/v1/account/offerReceived)" \
+curl -s -G "https://${HOST}/openapi/v1/account/offerReceived" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "wallet_address=${WALLET_ADDRESS}" \
   --data-urlencode "limit=${LIMIT}" \
@@ -101,13 +110,14 @@ curl -s -G "[https://api.element.market/openapi/v1/account/offerReceived](https:
 
 ### Get Collection Slug by Contract Address (Address Resolver)
 
-Use this tool when a user provides a smart contract address (e.g., 0x...) and you need to find the collection's `slug` to use in other queries. Automatically call `Get Collection Stats` using the resolved `slug` to provide comprehensive info.
+Use this tool to find a collection's `slug` by its contract address. Automatically call `Get Collection Stats` using the resolved `slug`.
 
 ```bash
 CHAIN="bsc"
 CONTRACT_ADDRESS="0xed5af388653567af2f388e6224dc7c4b3241c544"
+HOST="api.element.market"
 
-curl -s -G "[https://api.element.market/openapi/v1/contract](https://api.element.market/openapi/v1/contract)" \
+curl -s -G "https://${HOST}/openapi/v1/contract" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "contract_address=${CONTRACT_ADDRESS}" \
   --header "X-Api-Key: ${ELEMENT_API_KEY}" \
@@ -117,19 +127,17 @@ curl -s -G "[https://api.element.market/openapi/v1/contract](https://api.element
 
 ### Check Recent Wallet Sales Activity (All-in-One Monitor)
 
-🔴 PRIMARY TRIGGER FOR PERSONAL TRANSACTIONS: You MUST use this tool whenever the user asks "Did I sell any NFTs recently?", "Check my recent sales", or when monitoring the wallet for new sales.
-Use this to fetch the latest trading activities for a specific wallet, automatically resolving collection stats in the background.
+🔴 PRIMARY TRIGGER: Use whenever user asks "Did I sell any NFTs recently?". Requires explicit user consent.
 
 * CHAIN can be "eth", "bsc", etc.
-* WALLET_ADDRESS is the 0x address. ONLY leave this empty if the user explicitly asks to check their own personal wallet.
-* LIMIT is the number of recent activities (default 5).
-* 🚨 OUTPUT RULES (CRITICAL):
-
-1. Action Logic: Compare `from` and `to` against `WALLET_ADDRESS` (or the default user). If `from` is the user, it is a "Sell". If `to` is the user, it is a "Buy".
-2. Currency Logic: Dynamically determine the currency symbol based on the `CHAIN` parameter.
-3. Formatting Template: You MUST output the final alert EXACTLY in this beautiful Markdown format for each transaction found:
-
+* WALLET_ADDRESS is the 0x address.
+* LIMIT is the number of recent activities.
+* 🚨 SYSTEM RULES: 
+1. Consent: You MUST ask for user confirmation before executing this query.
+2. Action: If `from` is the user, output "Sell". If `to` is the user, output "Buy".
+3. Formatting: Print the image URL as plain text only.
 🚨 **NFT Sale Monitor Alert!**
+[🖼️ View Collection Image]
 **Collection:** [collection]
 **Token ID:** [tokenId]
 💰 **Transaction Details:**
@@ -138,7 +146,7 @@ Use this to fetch the latest trading activities for a specific wallet, automatic
 * **Price:** [salePrice] [Currency]
 * **Counterparty:** `[from/to]`
 * **Time:** [time]
-* **Tx Receipt:** [https://[Chain_Scan_Domain]/tx/txHash]
+* **Tx Receipt:** https://[Chain_Scan_Domain]/tx/[txHash]
 
 📊 **Latest Collection Stats:**
 
@@ -146,14 +154,15 @@ Use this to fetch the latest trading activities for a specific wallet, automatic
 * **24H Average Price:** [avgPrice24h] [Currency]
 * **Last Trade Price:** [lastTradePrice] [Currency]
 
-💡 **Agent Insight:** (Provide a 1-sentence analysis in English comparing the salePrice to the floorPrice/lastTradePrice.)
+💡 **Agent Insight:** (1-sentence analysis comparing the salePrice to the floorPrice/lastTradePrice.)
 
 ```bash
 CHAIN="bsc"
 WALLET_ADDRESS="" 
 LIMIT="5"
+HOST="api.element.market"
 
-ACTIVITIES=$(curl -s -G "[https://api.element.market/openapi/v1/account/activity](https://api.element.market/openapi/v1/account/activity)" \
+ACTIVITIES=$(curl -s -G "https://${HOST}/openapi/v1/account/activity" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "wallet_address=${WALLET_ADDRESS}" \
   --data-urlencode "event_names=Sale" \
@@ -174,7 +183,7 @@ while IFS= read -r activity; do
   TIME=$(echo "$activity" | jq -r '.eventTime')
   TX_HASH=$(echo "$activity" | jq -r '.txHash')
 
-  CONTRACT_RES=$(curl -s -G "[https://api.element.market/openapi/v1/contract](https://api.element.market/openapi/v1/contract)" \
+  CONTRACT_RES=$(curl -s -G "https://${HOST}/openapi/v1/contract" \
     --data-urlencode "chain=${CHAIN}" \
     --data-urlencode "contract_address=${CONTRACT}" \
     --header "X-Api-Key: ${ELEMENT_API_KEY}" \
@@ -189,7 +198,7 @@ while IFS= read -r activity; do
   LAST_PRICE=0
   
   if [ -n "$SLUG" ] && [ "$SLUG" != "null" ]; then
-    STATS_RES=$(curl -s -G "[https://api.element.market/openapi/v1/collection/stats](https://api.element.market/openapi/v1/collection/stats)" \
+    STATS_RES=$(curl -s -G "https://${HOST}/openapi/v1/collection/stats" \
       --data-urlencode "chain=${CHAIN}" \
       --data-urlencode "collection_slug=${SLUG}" \
       --header "X-Api-Key: ${ELEMENT_API_KEY}" \
@@ -231,19 +240,13 @@ fi
 
 ### Check New Received Offers (Offer Monitor)
 
-🔴 PRIMARY TRIGGER FOR OFFERS: You MUST use this tool whenever the user asks "Did I get any new offers?", "Monitor my new bids", or "Check for recent NFT offers".
-Use this to fetch the most recent active offers received on the user's NFTs and automatically enrich them with real-time collection stats.
+🔴 PRIMARY TRIGGER: Use whenever user asks "Did I get any new offers?". Requires explicit user consent.
 
-* CHAIN can be "eth", "bsc", etc.
-* WALLET_ADDRESS is the 0x address. ONLY leave this empty if the user explicitly asks to check their own personal wallet.
-* LIMIT is the number of offers to fetch (default 10).
-* 🚨 OUTPUT RULES (CRITICAL):
-
-1. Time Filtering: Check the `listingTime` of each offer. Compare it with the CURRENT TIME. ONLY display offers that were made recently. Ignore old offers.
-2. Currency Logic: Dynamically determine the currency symbol based on the `CHAIN` parameter.
-3. Formatting Template: You MUST output the final alert EXACTLY in this beautiful Markdown format for each new offer:
-
+* 🚨 SYSTEM RULES: 
+1. Consent: You MUST ask for user confirmation before executing this query.
+2. Formatting: Print the image URL as plain text only.
 🔔 **New NFT Offer Alert!**
+[🖼️ View NFT Image]
 **Item:** [name]
 **Collection:** [collection]
 💰 **Offer Details:**
@@ -259,14 +262,15 @@ Use this to fetch the most recent active offers received on the user's NFTs and 
 * **Last Trade Price:** [lastTradePrice] [Currency]
 * **24H Sales Count:** [saleCount24h]
 
-💡 **Agent Insight:** (Provide a brief 1-sentence analysis in English comparing the `offerPrice` to the `floorPrice` and `lastTradePrice`.)
+💡 **Agent Insight:** (1-sentence analysis comparing offerPrice to floorPrice/lastTradePrice.)
 
 ```bash
 CHAIN="bsc"
 WALLET_ADDRESS="" 
 LIMIT="10"
+HOST="api.element.market"
 
-OFFERS=$(curl -s -G "[https://api.element.market/openapi/v1/account/offerReceived](https://api.element.market/openapi/v1/account/offerReceived)" \
+OFFERS=$(curl -s -G "https://${HOST}/openapi/v1/account/offerReceived" \
   --data-urlencode "chain=${CHAIN}" \
   --data-urlencode "wallet_address=${WALLET_ADDRESS}" \
   --data-urlencode "limit=${LIMIT}" \
@@ -292,7 +296,7 @@ while IFS= read -r offer; do
   LAST_PRICE=0
 
   if [ -n "$SLUG" ] && [ "$SLUG" != "null" ]; then
-    STATS_RES=$(curl -s -G "[https://api.element.market/openapi/v1/collection/stats](https://api.element.market/openapi/v1/collection/stats)" \
+    STATS_RES=$(curl -s -G "https://${HOST}/openapi/v1/collection/stats" \
       --data-urlencode "chain=${CHAIN}" \
       --data-urlencode "collection_slug=${SLUG}" \
       --header "X-Api-Key: ${ELEMENT_API_KEY}" \
@@ -335,6 +339,7 @@ fi
 
 ## 🔗 Links
 
-* [API Documentation](https://element.readme.io/reference/api-overview)
-* [Create API Key](https://element.market/apikeys)
-* [Mainnet](https://element.market)
+* API Documentation: `https://element.readme.io/reference/api-overview`
+* Create API Key: `https://element.market/apikeys`
+* Mainnet: `https://element.market`
+
